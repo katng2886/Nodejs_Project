@@ -1,0 +1,91 @@
+//Rate checking for reservation
+DELIMITER $$
+CREATE PROCEDURE Ratechecking (IN S_Id int, IN B_Id int, IN Day DATE, OUT msg VARCHAR(255))
+BEGIN
+	DECLARE rate int;
+    DECLARE type varchar(255);
+	SELECT sailors.RATE into rate from sailors where sailors.S_Id = S_Id;
+	SELECT boats.Type into type from boats where boats.B_Id = B_Id;
+    IF rate > 7 THEN
+		INSERT INTO reserves (S_Id, B_Id, Day) VALUES (S_Id, B_Id, Day);
+		SET msg = 'Reservation added';
+	ELSEIF rate > 5 and rate < 7  and type = 'Sailboat' or type = 'Bassboat' THEN
+		INSERT INTO reserves (S_Id, B_Id, Day) VALUES (S_Id, B_Id, Day);
+		SET msg = 'Reservation added';
+	ELSEIF rate >= 2 and rate < 5 and type = 'Bassboat' THEN
+		INSERT INTO reserves (S_Id, B_Id, Day) VALUES (S_Id, B_Id, Day);
+		SET msg = 'Reservation added';
+	ELSE
+		SET msg = 'Rate too low';
+	END IF;
+END $$
+DELIMITER ;
+
+
+//Age checking for sailors 
+DELIMITER $$
+CREATE PROCEDURE add_sailor (IN qs.Sname VARCHAR(255), IN qs.B_date DATE, IN qs.Rate int, OUT msg VARCHAR(255)) 
+BEGIN 
+	DECLARE age INTEGER; 
+	SET age = floor(datediff(curdate(), B_date)/365); 
+	IF age >= 24 
+	THEN INSERT INTO sailors (Sname, B_date, Rate) VALUES(qs.Sname, qs.B_date, qs.Rate); 
+	SET msg = 'sailors is added'; 
+	ELSE SET msg = 'sailor\'s age must more than 24'; 
+	END IF;
+END $$
+DELIMITER ;`
+
+//Display the day before the given day.
+DELIMITER $$
+DROP PROCEDURE IF EXISTS displaybefore$$
+CREATE PROCEDURE displaybefore (IN B_Id int, IN Day DATE)
+BEGIN 
+	SELECT r.B_Id, b.B_name, DATE_FORMAT(r.Day, "%Y %M %D") AS Day FROM reserves as r JOIN boats as b ON r.B_Id = b.B_Id WHERE r.Day < Day;
+END$$
+DELIMITER ;
+
+//Display the day after the given day
+DELIMITER $$
+DROP PROCEDURE IF EXISTS displayafter$$
+CREATE PROCEDURE displayafter (IN B_Id int, IN Day DATE)
+BEGIN 
+	SELECT r.B_Id, b.B_name, DATE_FORMAT(r.Day, "%Y %M %D") AS Day FROM reserves as r JOIN boats as b ON r.B_Id = b.B_Id WHERE r.Day > Day;
+END$$
+DELIMITER ;
+
+
+//Display Boat name and Boat ID of the given Boat type. 
+DELIMITER $$
+CREATE PROCEDURE boatname (IN Type VARCHAR(255))
+BEGIN
+	SELECT B_Id, B_name, Type from Boats WHERE Boats.Type = Type;
+END $$
+DELIMITER ;
+
+//Display the boat count of the given Boat type
+DELIMITER $$
+CREATE PROCEDURE boatcount (IN Type VARCHAR(255))
+BEGIN
+	SELECT Type, COUNT(Type) AS COUNT FROM boats WHERE boats.Type = Type;
+END $$
+DELIMITER ;
+
+
+//Display older age
+DELIMITER $$
+CREATE PROCEDURE displayolderage (IN given_age int)
+BEGIN
+    SELECT S_Id, Sname, DATE_FORMAT(sailors.B_date, "%Y %M %D") AS B_date FROM sailors WHERE YEAR(curdate()) - YEAR(sailors.B_date) > given_age ;
+  
+END $$
+DELIMITER ;
+
+//DISPLAY younger age
+DELIMITER $$
+CREATE PROCEDURE displayyoungerage (IN given_age int)
+BEGIN
+    SELECT S_Id, Sname, DATE_FORMAT(sailors.B_date, "%Y %M %D") AS B_date FROM sailors WHERE YEAR(curdate()) - YEAR(sailors.B_date) < given_age ;
+  
+END $$
+DELIMITER ;
